@@ -1,0 +1,95 @@
+{
+  "format": "mini-vectordb-learning-evidence-v1",
+  "synthetic": false,
+  "project": "2026 OceanBase database competition - MiniVectorDB tie-breaker",
+  "scope": "Records available from the student's competition conversation. No hidden chain-of-thought is included.",
+  "conversations": [
+    {
+      "id": "c1",
+      "role": "student",
+      "content": "部署 UUID、公开 Fork 地址和官方 PR 地址是什么"
+    },
+    {
+      "id": "c2",
+      "role": "student",
+      "content": "在哪里查看",
+      "context": "After GitHub repository navigation was opened."
+    },
+    {
+      "id": "c3",
+      "role": "student",
+      "content": "你直接帮我操作，给你全权代理"
+    },
+    {
+      "id": "c4",
+      "role": "student",
+      "content": "已经set完毕请继续"
+    },
+    {
+      "id": "c5",
+      "role": "student",
+      "content": "没有找到立即提测的按键"
+    },
+    {
+      "id": "c6",
+      "role": "student",
+      "content": "https://ask.oceanbase.com/t/topic/35653700 这是我报名参赛时填写的github仓库",
+      "context": "The student supplied the official tie-breaker announcement and asked to continue implementing the competition requirements."
+    },
+    {
+      "id": "c7",
+      "role": "student",
+      "content": "继续执行完成比赛得要求指令"
+    }
+  ],
+  "experiments": [
+    {
+      "id": "e1",
+      "title": "Public SQL compatibility suite",
+      "command": "python tests/run_public.py",
+      "output": "20/20 public cases passed, covering CRUD, BIGINT, Unicode VARCHAR, persistence, vector distance, filtered TopK, index maintenance, transactions, and restart rollback.",
+      "student_interpretation": null
+    },
+    {
+      "id": "e2",
+      "title": "Additional limits",
+      "command": "python tests/run_extended.py",
+      "output": "PASS extended; checked BIGINT endpoints, Unicode code-point length, invalid vectors, transaction visibility, rollback and commit.",
+      "student_interpretation": null
+    },
+    {
+      "id": "e3",
+      "title": "Abrupt termination",
+      "command": "python tests/run_crash.py",
+      "output": "PASS crash recovery; committed rows survive SIGKILL and an uncommitted delete does not survive restart.",
+      "student_interpretation": null
+    },
+    {
+      "id": "e4",
+      "title": "Small performance run",
+      "command": "python tests/bench_small.py",
+      "output": "10,000 writes: 18.301s; 100 TopK queries: 0.630s on the development host.",
+      "student_interpretation": null
+    }
+  ],
+  "retrospective": {
+    "implemented": [
+      "SQL DDL and DML over stdin/stdout",
+      "BIGINT, VARCHAR and float32 VECTOR values",
+      "Exact filtered and unfiltered TopK",
+      "Append-only transactional journal and crash recovery",
+      "Container build and run documentation"
+    ],
+    "known_limitations": [
+      "Committed rows and scalar columns are currently retained in memory.",
+      "ANN mode intentionally uses exact search to guarantee recall.",
+      "The full Docker image was not built on the student's Windows host because Docker is unavailable.",
+      "No additional student interpretation or independent reasoning is claimed beyond the quoted messages."
+    ],
+    "planned_student_validation": [
+      "Run the public suite and explain which case exposes byte-order or numeric-conversion mistakes.",
+      "Compare exact and approximate search on a measured dataset and record a justified tradeoff.",
+      "Restart after a forced termination and independently verify both committed and uncommitted state."
+    ]
+  }
+}

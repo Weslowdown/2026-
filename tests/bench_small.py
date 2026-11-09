@@ -1,0 +1,63 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import tempfile
+import time
+from pathlib import Path
+
+import numpy as np
+
+from run_public import Client
+
+
+def vector_sql(vector: np.ndarray) -> str:
+    return "[" + ",".join(f"{float(x):.8g}" for x in vector) + "]"
+
+
+def main() -> int:
+    rng = np.random.default_rng(20261109)
+    rows = rng.normal(size=(10_000, 128)).astype(np.float32)
+    queries = rng.normal(size=(100, 128)).astype(np.float32)
+    with tempfile.TemporaryDirectory(prefix="mvd-bench-") as tmp:
+        client = Client(Path(tmp))
+        try:
+            started = time.perf_counter()
+            client.execute(
+                "CREATE TABLE bench (id BIGINT PRIMARY KEY, cat VARCHAR(8), v VECTOR(128))"
+            )
+            for start in range(0, len(rows), 100):
+                values = []
+                for row in rows[start : start + 100]:
+                    pk = start + len(values)
+                    values.append(f"({pk},'g{pk % 100}',{vector_sql(row)})")
+                response = client.execute(
+                    "INSERT INTO bench VALUES " + ",".join(values)
+                )
+                if response != ["OK 100"]:
+                    raise RuntimeError(response)
+            write_time = time.perf_counter() - started
+
+            started = time.perf_counter()
+            for i, query in enumerate(queries):
+                where = f" WHERE cat = 'g{i % 100}'" if i % 2 else ""
+                response = client.execute(
+                    "SELECT id, L2_DISTANCE(v, '"
+                    + vector_sql(query)
+                    + "') AS d FROM bench"
+                    + where
+                    + " ORDER BY d LIMIT 10"
+                )
+                if len(response) != 10:
+                    raise RuntimeError(response)
+            query_time = time.perf_counter() - started
+        finally:
+            client.stop()
+    print(
+        f"10,000 writes: {write_time:.3f}s; "
+        f"100 TopK queries: {query_time:.3f}s"
+    )
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

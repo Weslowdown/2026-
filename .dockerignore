@@ -1,0 +1,5 @@
+mysqltest
+tests
+data
+*.pyc
+__pycache__
